@@ -69,9 +69,12 @@ function connectToDB() {
  */
 function addEntry($database, $name, $message, $time, $ip) {
 
+    $n = htmlspecialchars($name);
+    $m = htmlspecialchars($message);
+
     $query = $database->prepare('insert into entries(name, message, time, ip) values
                                 (:name, :message, :time, :ip)');
-    $res = $query->execute( array(':name' => $name, ':message' => $message, ':time' => $time, ':ip' => $ip) );
+    $res = $query->execute( array(':name' => $n, ':message' => $m, ':time' => $time, ':ip' => $ip) );
     
     if ($res) {
         return true;
