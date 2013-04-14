@@ -127,6 +127,8 @@ function printEntries($database, $offset=0) {
     
     $count = 0;
     
+    echo '<div id="visitor-book-entries">';
+    
     /*
      * Print out each entry returned from the database one at a time
      */
@@ -134,6 +136,8 @@ function printEntries($database, $offset=0) {
         echo '<div class="visitor-book-entry"><h3>' . $res['name'] .'</h3> ' . '<time datetime="' . date(DATE_W3C, $res['time']) . '">' . date(DATE_RFC850, $res['time']) . '</time><p>' . $res['message'] . "</p></div>\n";
         $count++;
     }
+    
+    echo '<div id="visitor-book-links">';
     
     /*
      * If the count was 0, there were no entries returned from the database, so print a message 
@@ -146,15 +150,17 @@ function printEntries($database, $offset=0) {
             echo 'No more messages!';
         }
     } else {
-        // Print 'Previous' link
+        // Print 'Newer' link
         if ($offset >= ENTRIES_PER_PAGE) {
             $prevOffset = $offset - ENTRIES_PER_PAGE;
-            echo '<a href="?offset=' . ($offset - ENTRIES_PER_PAGE) . '">&lt; Previous</a>';
+            echo '<a href="?offset=' . ($offset - ENTRIES_PER_PAGE) . '" id="visitor-book-newer-link">&lt; Newer</a>';
         }
         
-        // Print 'Next' link
-        echo '<a href="?offset=' . ($offset + ENTRIES_PER_PAGE) . '">Next &gt;</a>';
+        // Print 'Older' link
+        echo '<a href="?offset=' . ($offset + ENTRIES_PER_PAGE) . '" id="visitor-book-older-link">Older &gt;</a>';
     }
+    
+    echo '</div></div>';
     
 }
 
@@ -219,6 +225,8 @@ printEntries($db, $_GET['offset']);
 
 ?>
 
+<div id="visitor-book-add-entry">
+<h2>Post New Message</h2>
 <form id="newEntryForm" method="post">
     <input type="text" id="name" name="name" maxlength="30" size="30" value="<?php echo $nameText; ?>"></input><br>
     
@@ -240,3 +248,4 @@ printEntries($db, $_GET['offset']);
     
     <input type="submit" name="postEntry" id="postEntry" value="Post Message"></input>
 </form>
+</div>
