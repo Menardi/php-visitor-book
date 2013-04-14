@@ -52,9 +52,9 @@ function connectToDB() {
                     name text,
                     message text,
                     time integer,
-                    ip text)');
+                    ipv4 text,
+                    deleted integer default 0)');
     } catch (Exception $e) {
-        echo 'Failed to create / open database';
         return false;
     }
     
@@ -72,7 +72,7 @@ function addEntry($database, $name, $message, $time, $ip) {
     $n = htmlspecialchars($name);
     $m = htmlspecialchars($message);
 
-    $query = $database->prepare('insert into entries(name, message, time, ip) values
+    $query = $database->prepare('insert into entries(name, message, time, ipv4) values
                                 (:name, :message, :time, :ip)');
     $res = $query->execute( array(':name' => $n, ':message' => $m, ':time' => $time, ':ip' => $ip) );
     
@@ -82,6 +82,27 @@ function addEntry($database, $name, $message, $time, $ip) {
         return false;
     }
         
+}
+
+/*
+ * Function: deleteEntry
+ * Parameters: PDO_DB $database, int $id
+ * Returns: true if entry was deleted successfully, false otherwise
+ * Description: Changes the status of an entry in a given database to deleted
+ */
+
+function deleteEntry($id) {
+
+    $query = $database->prepare('update entries set deleted=1 where id=:id limit 1');
+    
+    $res = $query->execute( array(':id' => $id) );
+    
+    if($res) {
+        return true;
+    } else {
+        return false;
+    }
+
 }
 
 /*
@@ -101,7 +122,7 @@ function printEntries($database, $offset=0) {
     /*
      * Perform a query on the database to get entries
      */
-    $query = $database->prepare('select name, message, time from entries order by id desc limit ' . ENTRIES_PER_PAGE . ' offset :offset');
+    $query = $database->prepare('select name, message, time from entries where deleted<>1 order by time desc limit ' . ENTRIES_PER_PAGE . ' offset :offset');
     $query->execute( array(':offset' => $offset) );
     
     $count = 0;
@@ -110,8 +131,7 @@ function printEntries($database, $offset=0) {
      * Print out each entry returned from the database one at a time
      */
     while($res = $query->fetch(PDO::FETCH_ASSOC)) {
-        echo '<p><strong>' . $res['name'] .'</strong> ' . date(DATE_RFC850, $res['time']) . '<br>';
-        echo $res['message'] . "</p>\n";
+        echo '<div class="visitor-book-entry"><h3>' . $res['name'] .'</h3> ' . '<time datetime="' . date(DATE_W3C, $res['time']) . '">' . date(DATE_RFC850, $res['time']) . '</time><p>' . $res['message'] . "</p></div>\n";
         $count++;
     }
     
@@ -120,15 +140,12 @@ function printEntries($database, $offset=0) {
      * explaining this.
      */
     if ($count == 0) {
-        
         if ($offset == 0) {
             echo 'No messages.';
         } else {
             echo 'No more messages!';
         }
-        
     } else {
-    
         // Print 'Previous' link
         if ($offset >= ENTRIES_PER_PAGE) {
             $prevOffset = $offset - ENTRIES_PER_PAGE;
@@ -171,7 +188,6 @@ if(isset($_POST['postEntry'])) {
     
     // if reCaptcha is enabled, then we must check the result first before posting
     if(RECAPTCHA_ENABLED) {
-    
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, 'http://www.google.com/recaptcha/api/verify');
         curl_setopt($ch, CURLOPT_POST, 1);
