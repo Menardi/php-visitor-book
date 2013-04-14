@@ -191,6 +191,9 @@ $messageText = 'Your message';
  * Process an entry if one has been POSTed
  */
 if(isset($_POST['postEntry'])) {
+
+    $errorMsg = '';
+    $successMsg = '';
     
     // if reCaptcha is enabled, then we must check the result first before posting
     if(RECAPTCHA_ENABLED) {
@@ -209,15 +212,21 @@ if(isset($_POST['postEntry'])) {
     }
 
     if( isset($recaptchaResult) && $recaptchaResult[0] == 'false' ) {
-        echo 'Try the reCaptcha again!';
+        $errorMsg = 'Try the reCaptcha again!';
         $nameText = $_POST['name'];
         $messageText = $_POST['message'];
     } else {
         if (addEntry($db, $_POST['name'], $_POST['message'], time(), $_SERVER['REMOTE_ADDR'])) {
-            echo 'Message posted!';
+            $successMsg = 'Message posted!';
         } else {
-            echo 'Something went wrong and your message could not be posted.';
+            $errorMsg = 'Something went wrong and your message could not be posted.';
         }
+    }
+    
+    if($errorMsg !== '') {
+        echo '<div id="visitor-book-error">' . $errorMsg . '</div>';
+    } else if ($successMsg !== '') {
+        echo '<div id="visitor-book-success">' . $successMsg . '</div>';
     }
 }
 
